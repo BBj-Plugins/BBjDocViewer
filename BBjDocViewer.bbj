@@ -1,0 +1,97 @@
+use com.basiscomponents.db.ResultSet
+use com.basiscomponents.db.DataRow
+use com.basiscomponents.db.tree.DataTree
+use java.sql.Types
+use com.google.gson.Gson
+use com.google.gson.JsonParser
+use com.google.gson.JsonObject
+use com.google.gson.JsonArray
+use java.lang.Integer
+use java.util.ArrayList
+use java.util.HashMap
+use ::BBjWidget/BBjWidget.bbj::BBjWidget
+rem /**
+rem  * A Grid Widget Plugin for BBj
+rem  */
+class public BBjDocViewer extends BBjWidget
+
+
+    field private BBjHtmlView HTMLView!
+    field private Boolean IsReady! = BBjAPI.FALSE
+    field private ResultSet RS!
+
+    rem /**
+    rem  * disabled default constructor
+    rem  */
+    method private BBjDocViewer()
+    methodend
+    rem /**
+    rem  * The constructor that creates the widget on wnd!
+    rem * @param BBjWindow wnd!: parent window
+    rem * @param BBjInt id: the control ID
+    rem * @param BBjInt x: x-location
+    rem * @param BBjInt y: y-location
+    rem * @param BBjInt w: width
+    rem * @param BBjInt h: height
+    rem */
+    method public BBjDocViewer(BBjWindow wnd!, BBjNumber id!, BBjNumber x!, BBjNumber y!, BBjNumber w!, BBjNumber h!)
+        #super!.create(wnd!,id!,x!,y!,w!,h!)
+    methodend
+    rem /**
+    rem  * @Override
+    rem  * This method is called whenever the widget needs to be rendered
+    rem  * @param Boolean f_init!: if TRUE trem /**
+    rem  *
+    rem  * control is rendered for the first time so this method has to perform initial rendering
+    rem  */
+    method public void redraw(Boolean f_init!)
+        declare BBjHtmlView htmlview!
+
+        if (f_init!) then
+            dummy$=stbl("!OPTIONS","JXBROWSER_HTMLVIEW=TRUE",ERR=*NEXT)
+            dummy$=stbl("!OPTIONS","JAVAFX_HTMLVIEW=TRUE",ERR=*NEXT)
+           
+            
+            htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
+            
+            #HTMLView!=htmlview!
+
+            htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
+            htmlview!.setOpaque(0)
+            htmlview!.setUrl("http://localhost:8888/files/")
+            
+
+            if INFO(3,6)<>"5" then
+                #HTMLView!.setLocation(-9,-9)
+            FI
+        FI
+
+        if INFO(3,6)="5" then
+            #HTMLView!.setSize(#getCanvas().getWidth(),#getCanvas().getHeight())
+        else
+            #HTMLView!.setSize(#getCanvas().getWidth()+16,#getCanvas().getHeight()+16)
+        FI
+    methodend
+    rem /**
+    rem  * callback method after initial load
+    rem  * does last initialization work
+    rem  *
+    rem  * @param BBjEvent ev!: the onLoad event
+    rem  */
+    method public void onLoad(BBjEvent ev!)
+        #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED); rem ' only do this once
+		
+		rem you need to create a context for Document Base of "web" with "docviewer" as a Path
+        #HTMLView!.setUrl("http://localhost:8888/docviewer/pdfjs/web/viewer.html")
+    methodend
+    
+    rem /**
+    rem  * experimental function that shows the developer console
+    rem  * (only in GUI, for BUI it's a NOOP)
+    rem  */
+    method public void showDeveloperConsole()
+        if (info(3,6)<>"5") then
+            #HTMLView!.executeScript("if (!document.getElementById('FirebugLite')){E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');E['setAttribute']('id', 'FirebugLite');E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');E['setAttribute']('FirebugLite', '4');(document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);E = new Image;E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');}")
+        FI
+    methodend
+classend

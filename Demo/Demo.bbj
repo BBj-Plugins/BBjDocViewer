@@ -1,0 +1,28 @@
+use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
+? 'HIDE'
+
+declare auto BBjTopLevelWindow wnd!
+declare BBjDocViewer grid!
+
+x=0
+y=0
+w=800
+h=600
+
+wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,800,600,"BBj Grid Ex Demo")
+grid! = new BBjDocViewer(wnd!,100,x,y,w,h)
+wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
+wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
+
+
+process_events
+
+byebye:
+bye
+
+resize:
+ev! = BBjAPI().getLastEvent()
+w=ev!.getWidth()
+h=ev!.getHeight()
+grid!.setSize(w,h)
+return
