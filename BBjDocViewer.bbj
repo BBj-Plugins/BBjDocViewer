@@ -1,25 +1,13 @@
-use com.basiscomponents.db.ResultSet
-use com.basiscomponents.db.DataRow
-use com.basiscomponents.db.tree.DataTree
-use java.sql.Types
-use com.google.gson.Gson
-use com.google.gson.JsonParser
-use com.google.gson.JsonObject
-use com.google.gson.JsonArray
-use java.lang.Integer
-use java.util.ArrayList
-use java.util.HashMap
 use ::BBjWidget/BBjWidget.bbj::BBjWidget
 rem /**
 rem  * A Grid Widget Plugin for BBj
 rem  */
 class public BBjDocViewer extends BBjWidget
 
-
     field private BBjHtmlView HTMLView!
     field private Boolean IsReady! = BBjAPI.FALSE
     field private ResultSet RS!
-
+    field private BBjVector backlog! = new BBjVector()
     rem /**
     rem  * disabled default constructor
     rem  */
@@ -50,16 +38,12 @@ class public BBjDocViewer extends BBjWidget
         if (f_init!) then
             dummy$=stbl("!OPTIONS","JXBROWSER_HTMLVIEW=TRUE",ERR=*NEXT)
             dummy$=stbl("!OPTIONS","JAVAFX_HTMLVIEW=TRUE",ERR=*NEXT)
-           
-            
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
-            
             #HTMLView!=htmlview!
-
             htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
             htmlview!.setOpaque(0)
-            htmlview!.setUrl("http://localhost:8888/files/")
-            
+            rem you need to create a context for Document Base of "web" with "docviewer" as a Path
+            #HTMLView!.setUrl("http://localhost:8888/docviewer/pdfjs/web/viewer.html")
 
             if INFO(3,6)<>"5" then
                 #HTMLView!.setLocation(-9,-9)
@@ -80,11 +64,40 @@ class public BBjDocViewer extends BBjWidget
     rem  */
     method public void onLoad(BBjEvent ev!)
         #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED); rem ' only do this once
-		
-		rem you need to create a context for Document Base of "web" with "docviewer" as a Path
-        #HTMLView!.setUrl("http://localhost:8888/docviewer/pdfjs/web/viewer.html")
+
+        ch=unt
+        open (ch) "BBjDocViewer/web/pdfjs/web/api.js"
+        read record (ch,siz=5512000)script$
+        close (ch)
+        #injectScript(script$)
+
+        #IsReady! = BBjAPI.TRUE
+
+        #executeScript("myFooFunction()")
+
+        it! = #backlog!.iterator()
+        while it!.hasNext()
+            s$=it!.next()
+            #HTMLView!.executeScript(s$)
+        wend
+
+        #backlog! = null()
     methodend
-    
+
+    method private void injectScript(BBjString script$)
+        bui = INFO(3,6)="5"
+        if bui then #HTMLView!.injectScript(script$) else #HTMLView!.injectScript(script$ , 1) FI
+    methodend
+
+    method private Object executeScript(BBjString s$)
+        if #IsReady! then
+            methodret #HTMLView!.executeScript(s$)
+        else
+            #backlog!.addItem(s$)
+        FI
+
+        methodret null()
+    methodend
     rem /**
     rem  * experimental function that shows the developer console
     rem  * (only in GUI, for BUI it's a NOOP)
@@ -94,4 +107,5 @@ class public BBjDocViewer extends BBjWidget
             #HTMLView!.executeScript("if (!document.getElementById('FirebugLite')){E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');E['setAttribute']('id', 'FirebugLite');E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');E['setAttribute']('FirebugLite', '4');(document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);E = new Image;E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');}")
         FI
     methodend
+
 classend
