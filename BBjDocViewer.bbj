@@ -89,46 +89,12 @@ class public BBjDocViewer extends BBjWidget
 
     method public void onInit(BBjEvent ev!)
         #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
-        #HTMLView!.setUrl("http://localhost:8888/docviewer/web/viewer.html?_nc=#disableworker=true" + str(rnd(0)))
+        #HTMLView!.setUrl("http://localhost:8888/docviewer/web/viewer.html?_nc=" + str(rnd(0)) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
     methodend
 
     method public void onLoad(BBjEvent ev!)
         #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED)
         BBjAPI().setCustomEventCallback(#Tag$,#this! , "onMessage")
-        bui = INFO(3,6)="5"
-        ch=unt
-        open (ch) "BBjDocViewer/src/pdfjs/init.js"
-        read record (ch,siz=5512000)script$
-        close (ch)
-        addr$="window.SOCKET_URL = 'ws://"+info(3,4)+":8887/"+#Tag$ + "';"
-        script$ = addr$ +  script$
-        #injectScript(script$)
-        rem ch=unt
-        rem open (ch) "BBjDocViewer/web/pdfjs/web/debugger.js"
-        rem read record (ch,siz=5512000)script$
-        rem close (ch)
-        rem #injectScript(script$)
-        ch=unt
-        open (ch) "BBjDocViewer/web/build/pdf.js"
-        read record (ch,siz=5512000)script$
-        close (ch)
-        #injectScript(script$)
-        ch=unt
-        open (ch) "BBjDocViewer/web/web/viewer.js"
-        read record (ch,siz=5512000)script$
-        close (ch)
-        p_script! = script$
-        rem Not working yet
-        if bui then
-            p_script! = p_script!.replaceAll("document\.","\getDocument()\.")
-        fi
-
-        #injectScript(p_script!)
-        ch=unt
-        open (ch) "BBjDocViewer/src/pdfjs/api.js"
-        read record (ch,siz=5512000)script$
-        close (ch)
-        #injectScript(script$)
         #IsBBjReady! = BBjAPI.TRUE
     methodend
 
@@ -141,9 +107,9 @@ class public BBjDocViewer extends BBjWidget
             case "initialized"
                 #IsViewerInitialized! = BBjAPI.TRUE
                 if #isReady() then #flushBacklog() fi
-            case "open"
-                #IsViewerInitialized! = BBjAPI.TRUE
-                if #isReady() then #flushBacklog() fi
+            case "opening"
+            case "opened"
+            case "openFailed"
         swend
     methodend
 
@@ -197,27 +163,22 @@ class public BBjDocViewer extends BBjWidget
         #emit("dv_toggleSidebar")
     methodend
 
-    rem method public void activateHandTool()
-    rem     #HandTool! = BBjAPI.TRUE
-    rem     #emit("dv_activateHandtool")
-    rem methodend
+    method public void activateHandTool()
+        #HandTool! = BBjAPI.TRUE
+        #emit("dv_activateHandtool")
+    methodend
 
-    rem method public void deactivateHandTool()
-    rem     #HandTool! = BBjAPI.FALSE
-    rem     #emit("dv_deativateHandtool")
-    rem methodend
+    method public void deactivateHandTool()
+        #HandTool! = BBjAPI.FALSE
+        #emit("dv_deativateHandtool")
+    methodend
 
-    rem method public void toggleHandTool()
-    rem     if  #HandTool!= BBjAPI.TRUE then
-    rem         #deactivateHandTool()
-    rem     else
-    rem         #activateHandTool()
-    rem     fi
-    rem methodend
-
-    method protected void injectScript(BBjString script$)
-        bui = INFO(3,6)="5"
-        if bui then #HTMLView!.injectScript(script$) else #HTMLView!.injectScript(script$ , 1) FI
+    method public void toggleHandTool()
+        if  #HandTool!= BBjAPI.TRUE then
+            #deactivateHandTool()
+        else
+            #activateHandTool()
+        fi
     methodend
 
     method protected Boolean isReady()
