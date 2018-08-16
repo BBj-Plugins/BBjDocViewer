@@ -1,5 +1,5 @@
 use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
-? 'HIDE'
+rem ? 'HIDE'
 
 declare auto BBjTopLevelWindow wnd!
 
@@ -8,15 +8,67 @@ y=0
 w=800
 h=600
 
-wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,800,600,"BBj PDF Viewer Demo")
-viewer! = new BBjDocViewer(wnd!,100,x,y,w,h)
+wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj PDF Viewer Demo")
+zoomIn!  = wnd!.addButton(204,5,5,100,25,"ZoomIn")
+zoomIn!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomIn")
+
+zoomOut!  = wnd!.addButton(205,100,5,100,25,"ZoomOut")
+zoomOut!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomOut")
+
+next!  = wnd!.addButton(206,200,5,100,25,"Next")
+next!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onNextPage")
+
+previous!  = wnd!.addButton(207,300,5,100,25,"Previous")
+previous!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onPreviousPage")
+
+toggleToolbar!  = wnd!.addButton(208,400,5,100,25,"Toggle Toolbar")
+toggleToolbar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleToolbar")
+
+toggleSidebar!  = wnd!.addButton(209,500,5,100,25,"Toggle Sidebar")
+toggleSidebar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleSidebar")
+
+
+
+viewer! = new BBjDocViewer(wnd!,100,0,35,900,563)
+rem viewer!.open("compressed.tracemonkey-pldi-09.pdf")
+rem wait(1)
+viewer!.open("compressed.tracemonkey-pldi-09.pdf")
+
+rem viewer!.zoomIn()
+rem viewer!.zoomIn()
+rem viewer!.setPage(3)
 wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
 wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
 
+toolbar! = 1
 process_events
 
 byebye:
 bye
+
+onZoomIn: 
+    viewer!.zoomIn()
+return
+
+onZoomOut:
+    viewer!.zoomOut()
+return
+
+onNextPage:
+     viewer!.next()
+return
+
+onPreviousPage:
+    viewer!.previous()
+return
+
+onToggleToolbar:
+    viewer!.toggleToolbar()
+return 
+
+onToggleSidebar:
+    viewer!.toggleSidebar()
+return
 
 resize:
 ev! = BBjAPI().getLastEvent()
