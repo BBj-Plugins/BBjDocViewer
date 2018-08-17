@@ -9,16 +9,30 @@ use com.google.gson.JsonArray
 use java.lang.Integer
 use java.util.ArrayList
 use java.util.HashMap
+use java.lang.Object
+use com.basis.bbj.proxies.event.BBjCustomEvent
+use com.google.gson.Gson
+use com.google.gson.JsonParser
+use com.google.gson.JsonObject
+use com.google.gson.JsonArray
+use com.basiscomponents.comm.WsServer
+use com.basiscomponents.comm.CrossEventDispatcher
 use ::BBjWidget/BBjWidget.bbj::BBjWidget
 rem /**
 rem  * A Grid Widget Plugin for BBj
 rem  */
 class public BBjDocViewer extends BBjWidget
 
-
-    field private BBjHtmlView HTMLView!
-    field private Boolean IsReady! = BBjAPI.FALSE
-    field private ResultSet RS!
+    field protected BBjHtmlView HTMLView!
+    field protected Boolean IsBBjReady! = BBjAPI.FALSE
+    field protected Boolean IsViewerInitialized! = BBjAPI.FALSE
+    field protected Boolean IsOpening! = BBjAPI.FALSE
+    field protected BBjVector backlog! = new BBjVector()
+    field protected BBjString Tag$
+    field protected WsServer WS!
+    field protected ResultSet RS!
+    field protected Boolean Toolbar! = BBjAPI.TRUE
+    field protected Boolean HandTool! = BBjAPI.FALSE
 
     rem /**
     rem  * disabled default constructor
@@ -36,34 +50,46 @@ class public BBjDocViewer extends BBjWidget
     rem */
     method public BBjDocViewer(BBjWindow wnd!, BBjNumber id!, BBjNumber x!, BBjNumber y!, BBjNumber w!, BBjNumber h!)
         #super!.create(wnd!,id!,x!,y!,w!,h!)
+        ed! = CrossEventDispatcher.getInstance(BBjAPI())
+        tag$ = str(ed!.register(BBjAPI()))
+        #Tag$ = tag$
+        ws! = WsServer.getInstance(BBjAPI(),8887)
+        ws!.setEventDispatcher(ed!)
+        #WS!= cast(WsServer,ws!)
     methodend
     rem /**
     rem  * @Override
     rem  * This method is called whenever the widget needs to be rendered
-    rem  * @param Boolean f_init!: if TRUE trem /**
+    rem  * @param Boolean init!: if TRUE trem /**
     rem  *
     rem  * control is rendered for the first time so this method has to perform initial rendering
     rem  */
-    method public void redraw(Boolean f_init!)
+    method public void redraw(Boolean init!)
         declare BBjHtmlView htmlview!
 
-        if (f_init!) then
-            dummy$=stbl("!OPTIONS","JXBROWSER_HTMLVIEW=TRUE",ERR=*NEXT)
-            dummy$=stbl("!OPTIONS","JAVAFX_HTMLVIEW=TRUE",ERR=*NEXT)
-           
-            
+        if (init!) then
+
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
-            
             #HTMLView!=htmlview!
-
-            htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
-            htmlview!.setOpaque(0)
-            htmlview!.setUrl("http://localhost:8888/files/")
             
-
+            if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5")
+                htmlview!.setText("<html><center>Error: Need the Chromium Engine in BBj 18.10 or later. Please check your BBj SAM coverage!</center></html>")
+            else
+                htmlview!.setOpaque(0)
+                htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onInit")
+            fi
+            
             if INFO(3,6)<>"5" then
                 #HTMLView!.setLocation(-9,-9)
             FI
+            
+            if (info(3,6)<>"5") then
+                url$ = htmlview!.getAttribute("remoteDebuggingURL")
+
+                if url$>"" then
+                    BBjAPI().getThinClient().browse(url$)
+                fi
+            fi
         FI
 
         if INFO(3,6)="5" then
@@ -72,26 +98,132 @@ class public BBjDocViewer extends BBjWidget
             #HTMLView!.setSize(#getCanvas().getWidth()+16,#getCanvas().getHeight()+16)
         FI
     methodend
-    rem /**
-    rem  * callback method after initial load
-    rem  * does last initialization work
-    rem  *
-    rem  * @param BBjEvent ev!: the onLoad event
-    rem  */
-    method public void onLoad(BBjEvent ev!)
-        #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED); rem ' only do this once
-		
-		rem you need to create a context for Document Base of "web" with "docviewer" as a Path
-        #HTMLView!.setUrl("http://localhost:8888/docviewer/pdfjs/web/viewer.html")
+
+    method public void onInit(BBjEvent ev!)
+        #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
+        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?_nc=" + str(rnd(0)) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
     methodend
+
+    method public void onLoad(BBjEvent ev!)
+        #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED)
+        BBjAPI().setCustomEventCallback(#Tag$,#this! , "onMessage")
+        #IsBBjReady! = BBjAPI.TRUE
+    methodend
+
+    method public void onMessage(BBjCustomEvent ev!)
+        msg! = ev!.getObject()
+        parser! = new JsonParser()
+        type! = parser!.parse(msg!).getAsJsonObject().get("type").getAsString()
+        detail! = parser!.parse(msg!).getAsJsonObject().get("detail").getAsJsonObject()
+        switch type!
+            case "initialized"
+                #IsViewerInitialized! = BBjAPI.TRUE
+                if #isReady() then #flushBacklog() fi
+            case "opening"
+            case "opened"
+            case "openFailed"
+        swend
+    methodend
+
+    method public void open(BBjString file$)
     
-    rem /**
-    rem  * experimental function that shows the developer console
-    rem  * (only in GUI, for BUI it's a NOOP)
-    rem  */
-    method public void showDeveloperConsole()
-        if (info(3,6)<>"5") then
-            #HTMLView!.executeScript("if (!document.getElementById('FirebugLite')){E = document['createElement' + 'NS'] && document.documentElement.namespaceURI;E = E ? document['createElement' + 'NS'](E, 'script') : document['createElement']('script');E['setAttribute']('id', 'FirebugLite');E['setAttribute']('src', 'https://getfirebug.com/' + 'firebug-lite.js' + '#startOpened');E['setAttribute']('FirebugLite', '4');(document['getElementsByTagName']('head')[0] || document['getElementsByTagName']('body')[0]).appendChild(E);E = new Image;E['setAttribute']('src', 'https://getfirebug.com/' + '#startOpened');}")
+        url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$)
+    
+        detail! = new JsonObject()
+        detail!.addProperty("path",url$)
+        #emit("dv_open" , detail!)
+    methodend
+
+    method public void zoomIn()
+        #emit("dv_zoomIn")
+    methodend
+
+    method public void zoomOut()
+        #emit("dv_zoomOut")
+    methodend
+
+    method public void setPage(BBjNumber page!)
+        detail! = new JsonObject()
+        detail!.addProperty("page",str(page!))
+        #emit("dv_setPage",detail!)
+    methodend
+
+    method public void next()
+        #emit("dv_nextPage")
+    methodend
+
+    method public void previous()
+        #emit("dv_prevPage")
+    methodend
+
+    method public void showToolbar()
+        #Toolbar! = BBjAPI.TRUE
+        #emit("dv_showToolbar")
+    methodend
+
+    method public void hideToolbar()
+        #Toolbar! = BBjAPI.FALSE
+        #emit("dv_hideToolbar")
+    methodend
+
+    method public void toggleToolbar()
+        if  #Toolbar!= BBjAPI.TRUE then
+            #hideToolbar()
+        else
+            #showToolbar()
+        fi
+    methodend
+
+    method public void toggleSidebar()
+        #emit("dv_toggleSidebar")
+    methodend
+
+    method public void activateHandTool()
+        #HandTool! = BBjAPI.TRUE
+        #emit("dv_activateHandtool")
+    methodend
+
+    method public void deactivateHandTool()
+        #HandTool! = BBjAPI.FALSE
+        #emit("dv_deativateHandtool")
+    methodend
+
+    method public void toggleHandTool()
+        if  #HandTool!= BBjAPI.TRUE then
+            #deactivateHandTool()
+        else
+            #activateHandTool()
+        fi
+    methodend
+
+    method protected Boolean isReady()
+        methodret (#IsBBjReady! and #IsViewerInitialized!) and #IsOpening! = BBjAPI.FALSE
+    methodend
+
+    method protected void flushBacklog()
+        it! = #backlog!.iterator()
+        while it!.hasNext()
+            s$=it!.next()
+            #WS!.send(#Tag$,s$)
+        wend
+
+        #backlog! = new BBjVector()
+    methodend
+
+    method protected void emit(BBjString type$ , JsonObject detail!)
+        event! = new JsonObject()
+        event!.addProperty("type",type$)
+        event!.add("detail",detail!)
+
+        if #isReady() then
+            #WS!.send(#Tag$, event!.toString())
+        else
+            #backlog!.addItem(event!.toString())
         FI
     methodend
+
+    method protected void emit(BBjString type$)
+        #emit(type$,new JsonObject())
+    methodend
+
 classend

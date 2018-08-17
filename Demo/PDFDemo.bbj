@@ -1,0 +1,107 @@
+call "BBjGridExWidget/util/EnableDebugger.bbj"
+
+use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
+? 'HIDE'
+
+declare auto BBjTopLevelWindow wnd!
+
+x=0
+y=0
+w=800
+h=600
+
+wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj PDF Viewer Demo")
+zoomIn!  = wnd!.addButton(204,5,5,100,25,"ZoomIn")
+zoomIn!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomIn")
+
+zoomOut!  = wnd!.addButton(205,100,5,100,25,"ZoomOut")
+zoomOut!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomOut")
+
+next!  = wnd!.addButton(206,200,5,100,25,"Next")
+next!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onNextPage")
+
+previous!  = wnd!.addButton(207,300,5,100,25,"Previous")
+previous!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onPreviousPage")
+
+toggleToolbar!  = wnd!.addButton(208,400,5,100,25,"Toggle Toolbar")
+toggleToolbar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleToolbar")
+
+toggleSidebar!  = wnd!.addButton(209,500,5,100,25,"Toggle Sidebar")
+toggleSidebar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleSidebar")
+
+handTool!  = wnd!.addButton(210,600,5,100,25,"Toggle HandTool")
+handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleHandTool")
+
+handTool!  = wnd!.addButton(211,700,5,100,25,"Open Document")
+handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
+
+
+viewer! = new BBjDocViewer(wnd!,100,0,35,900,563)
+rem viewer!.open("compressed.tracemonkey-pldi-09.pdf")
+rem wait(1)
+viewer!.open("BBjDocViewer/demo/sample.pdf")
+
+rem viewer!.zoomIn()
+rem viewer!.zoomIn()
+rem viewer!.setPage(3)
+wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
+wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
+
+toolbar! = 1
+process_events
+
+byebye:
+bye
+
+onZoomIn: 
+    viewer!.zoomIn()
+return
+
+onZoomOut:
+    viewer!.zoomOut()
+return
+
+onNextPage:
+     viewer!.next()
+return
+
+onPreviousPage:
+    viewer!.previous()
+return
+
+onToggleToolbar:
+    viewer!.toggleToolbar()
+return 
+
+onToggleSidebar:
+    viewer!.toggleSidebar()
+return
+
+onToggleHandTool:
+    viewer!.toggleHandTool()
+return 
+
+
+onOpenDocument:
+REM Build filters for brc/arc and all files
+  FILTER$="PDF Files"+$0a$+"*.pdf"
+  FILTER$=FILTER$+$0a$+"All Files (*.*)"+$0a$+"*.*"
+
+  REM Starting directory is the default Directory
+  FILE_DIR$=""
+
+  REM Use FILEOPEN() to get name of file to open
+  FILE_NAME$=FILEOPEN("Open Resource File",FILE_DIR$,"","",FILTER$)
+
+  if FILE_NAME$ <> "::CANCEL::" then
+    viewer!.open(FILE_NAME$)
+  fi
+return
+
+
+resize:
+ev! = BBjAPI().getLastEvent()
+w=ev!.getWidth()
+h=ev!.getHeight()
+viewer!.setSize(w,h)
+return
