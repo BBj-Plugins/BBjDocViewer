@@ -1,5 +1,7 @@
+call "BBjGridExWidget/util/EnableDebugger.bbj"
+
 use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
-rem ? 'HIDE'
+? 'HIDE'
 
 declare auto BBjTopLevelWindow wnd!
 
@@ -30,11 +32,14 @@ toggleSidebar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleSidebar")
 handTool!  = wnd!.addButton(210,600,5,100,25,"Toggle HandTool")
 handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleHandTool")
 
+handTool!  = wnd!.addButton(211,700,5,100,25,"Open Document")
+handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
+
 
 viewer! = new BBjDocViewer(wnd!,100,0,35,900,563)
 rem viewer!.open("compressed.tracemonkey-pldi-09.pdf")
 rem wait(1)
-viewer!.open("compressed.tracemonkey-pldi-09.pdf")
+viewer!.open("BBjDocViewer/demo/sample.pdf")
 
 rem viewer!.zoomIn()
 rem viewer!.zoomIn()
@@ -75,6 +80,24 @@ return
 onToggleHandTool:
     viewer!.toggleHandTool()
 return 
+
+
+onOpenDocument:
+REM Build filters for brc/arc and all files
+  FILTER$="PDF Files"+$0a$+"*.pdf"
+  FILTER$=FILTER$+$0a$+"All Files (*.*)"+$0a$+"*.*"
+
+  REM Starting directory is the default Directory
+  FILE_DIR$=""
+
+  REM Use FILEOPEN() to get name of file to open
+  FILE_NAME$=FILEOPEN("Open Resource File",FILE_DIR$,"","",FILTER$)
+
+  if FILE_NAME$ <> "::CANCEL::" then
+    viewer!.open(FILE_NAME$)
+  fi
+return
+
 
 resize:
 ev! = BBjAPI().getLastEvent()

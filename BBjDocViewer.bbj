@@ -68,16 +68,28 @@ class public BBjDocViewer extends BBjWidget
         declare BBjHtmlView htmlview!
 
         if (init!) then
-            dummy$=stbl("!OPTIONS","JXBROWSER_HTMLVIEW=TRUE",ERR=*NEXT)
-            dummy$=stbl("!OPTIONS","JAVAFX_HTMLVIEW=TRUE",ERR=*NEXT)
+
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
             #HTMLView!=htmlview!
-            htmlview!.setOpaque(0)
-            htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onInit")
-
+            
+            if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5")
+                htmlview!.setText("<html><center>Error: Need the Chromium Engine in BBj 18.10 or later. Please check your BBj SAM coverage!</center></html>")
+            else
+                htmlview!.setOpaque(0)
+                htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onInit")
+            fi
+            
             if INFO(3,6)<>"5" then
                 #HTMLView!.setLocation(-9,-9)
             FI
+            
+            if (info(3,6)<>"5") then
+                url$ = htmlview!.getAttribute("remoteDebuggingURL")
+
+                if url$>"" then
+                    BBjAPI().getThinClient().browse(url$)
+                fi
+            fi
         FI
 
         if INFO(3,6)="5" then
@@ -89,7 +101,7 @@ class public BBjDocViewer extends BBjWidget
 
     method public void onInit(BBjEvent ev!)
         #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
-        #HTMLView!.setUrl("http://localhost:8888/docviewer/web/viewer.html?_nc=" + str(rnd(0)) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
+        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?_nc=" + str(rnd(0)) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
     methodend
 
     method public void onLoad(BBjEvent ev!)
@@ -114,8 +126,11 @@ class public BBjDocViewer extends BBjWidget
     methodend
 
     method public void open(BBjString file$)
+    
+        url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$)
+    
         detail! = new JsonObject()
-        detail!.addProperty("path","http://localhost:8888/docviewer/web/" + file$)
+        detail!.addProperty("path",url$)
         #emit("dv_open" , detail!)
     methodend
 
