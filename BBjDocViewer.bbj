@@ -83,13 +83,12 @@ class public BBjDocViewer extends BBjWidget
                 #HTMLView!.setLocation(-9,-9)
             FI
             
-            if (info(3,6)<>"5") then
-                url$ = htmlview!.getAttribute("remoteDebuggingURL")
-
-                if url$>"" then
-                    BBjAPI().getThinClient().browse(url$)
-                fi
-            fi
+REM             if (info(3,6)<>"5") then
+REM                 url$ = htmlview!.getAttribute("remoteDebuggingURL")
+REM                 if url$>"" then
+REM                     BBjAPI().getThinClient().browse(url$)
+REM                 fi
+REM             fi
         FI
 
         if INFO(3,6)="5" then
@@ -128,7 +127,6 @@ class public BBjDocViewer extends BBjWidget
     method public void open(BBjString file$)
     
         url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$)
-    
         detail! = new JsonObject()
         detail!.addProperty("path",url$)
         #emit("dv_open" , detail!)

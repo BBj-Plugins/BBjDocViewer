@@ -1,5 +1,3 @@
-call "BBjGridExWidget/util/EnableDebugger.bbj"
-
 use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
 ? 'HIDE'
 
@@ -9,6 +7,9 @@ x=0
 y=0
 w=800
 h=600
+
+rem call "BBjDocViewer/util/EnableDebugger.bbj"
+
 
 wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj PDF Viewer Demo")
 zoomIn!  = wnd!.addButton(204,5,5,100,25,"ZoomIn")
@@ -37,13 +38,9 @@ handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
 
 
 viewer! = new BBjDocViewer(wnd!,100,0,35,900,563)
-rem viewer!.open("compressed.tracemonkey-pldi-09.pdf")
-rem wait(1)
-viewer!.open("BBjDocViewer/demo/sample.pdf")
+viewer!.open("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf")
 
-rem viewer!.zoomIn()
-rem viewer!.zoomIn()
-rem viewer!.setPage(3)
+
 wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
 wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
 
