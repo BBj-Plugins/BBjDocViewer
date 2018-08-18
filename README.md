@@ -1,2 +1,3 @@
 # BBjDocViewer
-A document (not only) for PDF documents.
+A document (not only) for PDF documents. But for now, only PDF is supported...
+
