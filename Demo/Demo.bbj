@@ -1,43 +1,34 @@
 use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
 ? 'HIDE'
 
-declare auto BBjTopLevelWindow wnd!
+wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj Document Viewer Demo")
 
-x=0
-y=0
-w=800
-h=600
-
-rem call "BBjDocViewer/util/EnableDebugger.bbj"
-
-
-wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj PDF Viewer Demo")
 zoomIn!  = wnd!.addButton(204,5,5,100,25,"ZoomIn")
 zoomIn!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomIn")
 
-zoomOut!  = wnd!.addButton(205,100,5,100,25,"ZoomOut")
+zoomOut!  = wnd!.addButton(205,105,5,100,25,"ZoomOut")
 zoomOut!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomOut")
 
-next!  = wnd!.addButton(206,200,5,100,25,"Next")
+next!  = wnd!.addButton(206,205,5,100,25,"Next")
 next!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onNextPage")
 
-previous!  = wnd!.addButton(207,300,5,100,25,"Previous")
+previous!  = wnd!.addButton(207,305,5,100,25,"Previous")
 previous!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onPreviousPage")
 
-toggleToolbar!  = wnd!.addButton(208,400,5,100,25,"Toggle Toolbar")
+toggleToolbar!  = wnd!.addButton(208,405,5,100,25,"Toggle Toolbar")
 toggleToolbar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleToolbar")
 
-toggleSidebar!  = wnd!.addButton(209,500,5,100,25,"Toggle Sidebar")
+toggleSidebar!  = wnd!.addButton(209,505,5,100,25,"Toggle Sidebar")
 toggleSidebar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleSidebar")
 
-handTool!  = wnd!.addButton(210,600,5,100,25,"Toggle HandTool")
+handTool!  = wnd!.addButton(210,605,5,100,25,"Toggle HandTool")
 handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleHandTool")
 
-handTool!  = wnd!.addButton(211,700,5,100,25,"Open Document")
+handTool!  = wnd!.addButton(211,705,5,100,25,"Open Document")
 handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
 
 
-viewer! = new BBjDocViewer(wnd!,100,0,35,900,563)
+viewer! = new BBjDocViewer(wnd!,100,0,40,895,555)
 viewer!.open("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf")
 
 
@@ -97,8 +88,14 @@ return
 
 
 resize:
-ev! = BBjAPI().getLastEvent()
-w=ev!.getWidth()
-h=ev!.getHeight()
-viewer!.setSize(w,h)
+    BBjAPI().removeTimer("BBjDocViewer_delayed_resize",err=*next)
+    BBjAPI().createTimer("BBjDocViewer_delayed_resize",.2,"delayed_resize")
+    ev! = BBjAPI().getLastEvent()
+    w=ev!.getWidth()
+    h=ev!.getHeight()
+return
+    
+delayed_resize:
+    BBjAPI().removeTimer("BBjDocViewer_delayed_resize",err=*next)
+    viewer!.setSize(w-5,h-45)
 return

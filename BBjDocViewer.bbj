@@ -125,11 +125,31 @@ REM             fi
     methodend
 
     method public void open(BBjString file$)
-    
-        url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$)
+
+        dest_file$=file$
+        while pos("/"=dest_file$)>0
+            dest_file$=dest_file$(pos("/"=dest_file$)+1)
+        wend
+        while pos("\"=dest_file$)>0
+            dest_file$=dest_file$(pos("\"=dest_file$)+1)
+        wend
+        
+        dest_file$=java.net.URLEncoder.encode(dest_file$).replaceAll("\+", "%20").replaceAll("%","_")
+        
+        if rev>"REV 18.10" then
+            url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$,"",dest_file$,0,1,err=*next)
+        fi
+        
+        if (url$="") then
+            rem falling back for versions <=18.10 where the BBUtils did not have the extra option
+            rem for temporary obfuscated URLs; this might be a dev build that doesn't have this yet
+            url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$,"",dest_file$,0)
+        fi
+        
         detail! = new JsonObject()
         detail!.addProperty("path",url$)
         #emit("dv_open" , detail!)
+        
     methodend
 
     method public void zoomIn()
