@@ -35,7 +35,6 @@ viewer!.open("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf")
 wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
 wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
 
-toolbar! = 1
 process_events
 
 byebye:

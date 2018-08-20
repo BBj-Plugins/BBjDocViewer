@@ -56,6 +56,7 @@ class public BBjDocViewer extends BBjWidget
         ws! = WsServer.getInstance(BBjAPI(),8887)
         ws!.setEventDispatcher(ed!)
         #WS!= cast(WsServer,ws!)
+        BBjAPI().setCustomEventCallback(#Tag$,#this! , "onMessage")
     methodend
     rem /**
     rem  * @Override
@@ -100,12 +101,12 @@ REM             fi
 
     method public void onInit(BBjEvent ev!)
         #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
-        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?_nc=" + str(rnd(0)) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
+        hash! = java.util.UUID.randomUUID().toString()
+        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
     methodend
 
     method public void onLoad(BBjEvent ev!)
         #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED)
-        BBjAPI().setCustomEventCallback(#Tag$,#this! , "onMessage")
         #IsBBjReady! = BBjAPI.TRUE
     methodend
 
@@ -136,9 +137,9 @@ REM             fi
         
         dest_file$=java.net.URLEncoder.encode(dest_file$).replaceAll("\+", "%20").replaceAll("%","_")
         
-        if rev>"REV 18.10" then
-            url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$,"",dest_file$,0,1,err=*next)
-        fi
+        rem if rev>"REV 18.10" then
+        rem     url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$,"",dest_file$,0,1,err=*next)
+        rem fi
         
         if (url$="") then
             rem falling back for versions <=18.10 where the BBUtils did not have the extra option
