@@ -108,6 +108,14 @@ function dv_deativateHandtool() {
 }
 
 document.addEventListener('DOMContentLoaded', function () {
+
+  var isBui = getParameterByName("bui");
+  if("true" !== isBui) {
+    document.querySelectorAll(".presentationMode").forEach(function(item){
+      item.classList.add('hidden');
+    });
+  }
+
   window.PDFViewerApplication.watch('initialized', function () {
     emit({
       type: 'initialized',

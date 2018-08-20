@@ -104,7 +104,9 @@ REM             fi
     method public void onInit(BBjEvent ev!)
         #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
         hash! = java.util.UUID.randomUUID().toString()
-        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?file=&_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
+        bui! = "&"
+        if (info(3,6)="5") then bui! = bui! + "bui=true"
+        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/basis-viewer.html?file=&_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$ + bui!)
     methodend
 
     method public void onLoad(BBjEvent ev!)
