@@ -24,7 +24,6 @@ rem  */
 class public BBjDocViewer extends BBjWidget
 
     field protected BBjHtmlView HTMLView!
-    field protected Boolean IsBBjReady! = BBjAPI.FALSE
     field protected Boolean IsViewerInitialized! = BBjAPI.FALSE
     field protected Boolean IsOpening! = BBjAPI.FALSE
     field protected BBjVector backlog! = new BBjVector()
@@ -50,6 +49,9 @@ class public BBjDocViewer extends BBjWidget
     rem */
     method public BBjDocViewer(BBjWindow wnd!, BBjNumber id!, BBjNumber x!, BBjNumber y!, BBjNumber w!, BBjNumber h!)
         #super!.create(wnd!,id!,x!,y!,w!,h!)
+
+        WsServer.DEBUG = BBjAPI.TRUE
+        
         ed! = CrossEventDispatcher.getInstance(BBjAPI())
         tag$ = str(ed!.register(BBjAPI()))
         #Tag$ = tag$
@@ -102,12 +104,11 @@ REM             fi
     method public void onInit(BBjEvent ev!)
         #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
         hash! = java.util.UUID.randomUUID().toString()
-        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
+        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/viewer.html?file=&_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$)
     methodend
 
     method public void onLoad(BBjEvent ev!)
         #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED)
-        #IsBBjReady! = BBjAPI.TRUE
     methodend
 
     method public void onMessage(BBjCustomEvent ev!)
@@ -216,7 +217,7 @@ REM             fi
     methodend
 
     method protected Boolean isReady()
-        methodret (#IsBBjReady! and #IsViewerInitialized!) and #IsOpening! = BBjAPI.FALSE
+        methodret  #IsViewerInitialized!
     methodend
 
     method protected void flushBacklog()
