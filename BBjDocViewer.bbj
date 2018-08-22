@@ -18,9 +18,7 @@ use com.google.gson.JsonArray
 use com.basiscomponents.comm.WsServer
 use com.basiscomponents.comm.CrossEventDispatcher
 use ::BBjWidget/BBjWidget.bbj::BBjWidget
-rem /**
-rem  * A Grid Widget Plugin for BBj
-rem  */
+
 class public BBjDocViewer extends BBjWidget
 
     field protected BBjHtmlView HTMLView!
@@ -106,7 +104,7 @@ REM             fi
         hash! = java.util.UUID.randomUUID().toString()
         bui! = "&"
         if (info(3,6)="5") then bui! = bui! + "bui=true"
-        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/web/basis-viewer.html?file=&_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$ + bui!)
+        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/pdfjs/web/viewer.html?file=&_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$ + bui!)
     methodend
 
     method public void onLoad(BBjEvent ev!)
