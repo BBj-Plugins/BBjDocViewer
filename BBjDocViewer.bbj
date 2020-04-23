@@ -11,10 +11,6 @@ use java.util.ArrayList
 use java.util.HashMap
 use java.lang.Object
 use com.basis.bbj.proxies.event.BBjCustomEvent
-use com.google.gson.Gson
-use com.google.gson.JsonParser
-use com.google.gson.JsonObject
-use com.google.gson.JsonArray
 use com.basiscomponents.comm.WsServer
 use com.basiscomponents.comm.CrossEventDispatcher
 use ::BBjWidget/BBjWidget.bbj::BBjWidget
