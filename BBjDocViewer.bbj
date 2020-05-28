@@ -43,16 +43,6 @@ class public BBjDocViewer extends BBjWidget
     rem */
     method public BBjDocViewer(BBjWindow wnd!, BBjNumber id!, BBjNumber x!, BBjNumber y!, BBjNumber w!, BBjNumber h!)
         #super!.create(wnd!,id!,x!,y!,w!,h!)
-
-        WsServer.DEBUG = BBjAPI.TRUE
-        
-        ed! = CrossEventDispatcher.getInstance(BBjAPI())
-        tag$ = str(ed!.register(BBjAPI()))
-        #Tag$ = tag$
-        ws! = WsServer.getInstance(BBjAPI(),8887)
-        ws!.setEventDispatcher(ed!)
-        #WS!= cast(WsServer,ws!)
-        BBjAPI().setCustomEventCallback(#Tag$,#this! , "onMessage")
     methodend
     rem /**
     rem  * @Override
@@ -73,19 +63,12 @@ class public BBjDocViewer extends BBjWidget
                 htmlview!.setText("<html><center>Error: Need the Chromium Engine in BBj 18.10 or later. Please check your BBj SAM coverage!</center></html>")
             else
                 htmlview!.setOpaque(0)
-                htmlview!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onInit")
             fi
             
             if INFO(3,6)<>"5" then
                 #HTMLView!.setLocation(-9,-9)
             FI
             
-REM             if (info(3,6)<>"5") then
-REM                 url$ = htmlview!.getAttribute("remoteDebuggingURL")
-REM                 if url$>"" then
-REM                     BBjAPI().getThinClient().browse(url$)
-REM                 fi
-REM             fi
         FI
 
         if INFO(3,6)="5" then
@@ -95,165 +78,13 @@ REM             fi
         FI
     methodend
 
-    method public void onInit(BBjEvent ev!)
-        #HTMLView!.setCallback(BBjAPI.ON_PAGE_LOADED,#this!,"onLoad")
-        hash! = java.util.UUID.randomUUID().toString()
-        bui! = "&"
-        if (info(3,6)="5") then bui! = bui! + "bui=true"
-        #HTMLView!.setUrl("http://"+info(3,4)+":8888/docviewer/pdfjs/web/viewer.html?file=&_nc=" + str(hash!) + "&_socket=" + "ws://"+info(3,4)+":8887/"+#Tag$ + bui!)
-    methodend
-
-    method public void onLoad(BBjEvent ev!)
-        #HTMLView!.clearCallback(#HTMLView!.ON_PAGE_LOADED)
-    methodend
-
-    method public void onMessage(BBjCustomEvent ev!)
-        msg! = ev!.getObject()
-        parser! = new JsonParser()
-        type! = parser!.parse(msg!).getAsJsonObject().get("type").getAsString()
-        detail! = parser!.parse(msg!).getAsJsonObject().get("detail").getAsJsonObject()
-        switch type!
-            case "initialized"
-                #IsViewerInitialized! = BBjAPI.TRUE
-                if #isReady() then #flushBacklog() fi
-            case "opening"
-            case "opened"
-            case "openFailed"
-        swend
-    methodend
-
+  
     method public void open(BBjString file$)
-
-        #checkFrameworkInstallation()
-
-        dest_file$=file$
-        while pos("/"=dest_file$)>0
-            dest_file$=dest_file$(pos("/"=dest_file$)+1)
-        wend
-        while pos("\"=dest_file$)>0
-            dest_file$=dest_file$(pos("\"=dest_file$)+1)
-        wend
-        
-        dest_file$=java.net.URLEncoder.encode(dest_file$).replaceAll("\+", "%20").replaceAll("%","_")
-        
-        url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$,"",dest_file$,0,1,err=*next)
-        
-REM         if (url$="") then
-REM             rem falling back for versions <=18.10 where the BBUtils did not have the extra option
-REM             rem for temporary obfuscated URLs; this might be a dev build that doesn't have this yet
-REM             url$ = ::BBUtils.bbj::BBUtils.copyFileToWebServer(file$,"",dest_file$,0)
-REM         fi
-        
-        detail! = new JsonObject()
-        detail!.addProperty("path",url$)
-        #emit("dv_open" , detail!)
-        
+        #HTMLView!.setUrl("file://"+file$)
     methodend
     
-    method private void checkFrameworkInstallation()
-    
-        destDir$ = System.getProperty("basis.BBjHome") + "/htdocs/docviewer/"
-        ch=unt
-        open (ch,err=*next)destDir$; close (ch); methodret
-        
-        open (ch)"BBjDocViewer/web/api"
-        path$ = BBjAPI().getFileSystem().resolvePath("BBjDocViewer/web/api")
-        org.apache.commons.io.FileUtils.copyDirectory(new java.io.File(path$),new java.io.File(destDir$+"/api/"))
-        path$ = BBjAPI().getFileSystem().resolvePath("BBjDocViewer/web/pdfjs")
-        org.apache.commons.io.FileUtils.copyDirectory(new java.io.File(path$),new java.io.File(destDir$+"/pdfjs/"))
-
-    methodend
-
-    method public void zoomIn()
-        #emit("dv_zoomIn")
-    methodend
-
-    method public void zoomOut()
-        #emit("dv_zoomOut")
-    methodend
-
-    method public void setPage(BBjNumber page!)
-        detail! = new JsonObject()
-        detail!.addProperty("page",str(page!))
-        #emit("dv_setPage",detail!)
-    methodend
-
-    method public void next()
-        #emit("dv_nextPage")
-    methodend
-
-    method public void previous()
-        #emit("dv_prevPage")
-    methodend
-
-    method public void showToolbar()
-        #Toolbar! = BBjAPI.TRUE
-        #emit("dv_showToolbar")
-    methodend
-
-    method public void hideToolbar()
-        #Toolbar! = BBjAPI.FALSE
-        #emit("dv_hideToolbar")
-    methodend
-
-    method public void toggleToolbar()
-        if  #Toolbar!= BBjAPI.TRUE then
-            #hideToolbar()
-        else
-            #showToolbar()
-        fi
-    methodend
-
-    method public void toggleSidebar()
-        #emit("dv_toggleSidebar")
-    methodend
-
-    method public void activateHandTool()
-        #HandTool! = BBjAPI.TRUE
-        #emit("dv_activateHandtool")
-    methodend
-
-    method public void deactivateHandTool()
-        #HandTool! = BBjAPI.FALSE
-        #emit("dv_deativateHandtool")
-    methodend
-
-    method public void toggleHandTool()
-        if  #HandTool!= BBjAPI.TRUE then
-            #deactivateHandTool()
-        else
-            #activateHandTool()
-        fi
-    methodend
-
-    method protected Boolean isReady()
-        methodret  #IsViewerInitialized!
-    methodend
-
-    method protected void flushBacklog()
-        it! = #backlog!.iterator()
-        while it!.hasNext()
-            s$=it!.next()
-            #WS!.send(#Tag$,s$)
-        wend
-
-        #backlog! = new BBjVector()
-    methodend
-
-    method protected void emit(BBjString type$ , JsonObject detail!)
-        event! = new JsonObject()
-        event!.addProperty("type",type$)
-        event!.add("detail",detail!)
-
-        if #isReady() then
-            #WS!.send(#Tag$, event!.toString())
-        else
-            #backlog!.addItem(event!.toString())
-        FI
-    methodend
-
-    method protected void emit(BBjString type$)
-        #emit(type$,new JsonObject())
-    methodend
+  
 
 classend
+
+

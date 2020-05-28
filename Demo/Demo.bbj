@@ -3,34 +3,14 @@ use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
 
 wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj Document Viewer Demo")
 
-zoomIn!  = wnd!.addButton(204,5,5,100,25,"ZoomIn")
-zoomIn!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomIn")
 
-zoomOut!  = wnd!.addButton(205,105,5,100,25,"ZoomOut")
-zoomOut!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onZoomOut")
 
-next!  = wnd!.addButton(206,205,5,100,25,"Next")
-next!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onNextPage")
-
-previous!  = wnd!.addButton(207,305,5,100,25,"Previous")
-previous!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onPreviousPage")
-
-toggleToolbar!  = wnd!.addButton(208,405,5,100,25,"Toggle Toolbar")
-toggleToolbar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleToolbar")
-
-toggleSidebar!  = wnd!.addButton(209,505,5,100,25,"Toggle Sidebar")
-toggleSidebar!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleSidebar")
-
-handTool!  = wnd!.addButton(210,605,5,100,25,"Toggle HandTool")
-handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onToggleHandTool")
-
-handTool!  = wnd!.addButton(211,705,5,100,25,"Open Document")
+handTool!  = wnd!.addButton(211,5,5,100,25,"Open Document")
 handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
 
 
 viewer! = new BBjDocViewer(wnd!,100,0,40,895,555)
-viewer!.open("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf")
-
+viewer!.open(BBjAPI().getFileSystem().resolvePath("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf"))
 
 wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
 wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
@@ -39,34 +19,6 @@ process_events
 
 byebye:
 bye
-
-onZoomIn: 
-    viewer!.zoomIn()
-return
-
-onZoomOut:
-    viewer!.zoomOut()
-return
-
-onNextPage:
-     viewer!.next()
-return
-
-onPreviousPage:
-    viewer!.previous()
-return
-
-onToggleToolbar:
-    viewer!.toggleToolbar()
-return 
-
-onToggleSidebar:
-    viewer!.toggleSidebar()
-return
-
-onToggleHandTool:
-    viewer!.toggleHandTool()
-return 
 
 
 onOpenDocument:

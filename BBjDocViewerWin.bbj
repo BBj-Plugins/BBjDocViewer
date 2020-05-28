@@ -1,0 +1,42 @@
+use ::BBjDocViewer/BBjDocViewer.bbj::BBjDocViewer
+
+if argc>1 then
+    f$=argv(1)
+else 
+    f$=BBjAPI().getFileSystem().resolvePath("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf")
+fi
+
+sysgui! = BBjAPI().openSysGui("X0")    
+if info(3,6)="5" then
+    wnd! = sysgui!.addWindow(100,100,1000,600,f$,$01001010$)
+else
+    wnd! = sysgui!.addWindow(100,100,1000,600,f$,$00000093$)
+fi
+  
+w = wnd!.getWidth()
+h = wnd!.getHeight()
+
+viewer! = new BBjDocViewer(wnd!,100,5,5,w-10,h-10)
+viewer!.open(f$)
+
+wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
+wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
+
+wnd!.setVisible(1)
+
+process_events
+
+byebye:
+    bye
+
+resize:
+  BBjAPI().removeTimer("resize",err=*next)
+  BBjAPI().createTimer("resize",.4,"delayed_resize")
+return
+
+delayed_resize:
+  BBjAPI().removeTimer("resize",err=*next)
+  w = wnd!.getWidth()
+  h = wnd!.getHeight()
+  viewer!.setSize(w-10,h-10)
+return
