@@ -10,7 +10,7 @@ handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
 
 
 viewer! = new BBjDocViewer(wnd!,100,0,40,895,555)
-viewer!.open(BBjAPI().getFileSystem().resolvePath("BBjDocViewer/demo/compressed.tracemonkey-pldi-09.pdf"))
+viewer!.open(BBjAPI().getFileSystem().resolvePath("BBjDocViewer/Demo/compressed.tracemonkey-pldi-09.pdf")+"#view=two-up")
 
 wnd!        .setCallback(BBjAPI.ON_CLOSE,"byebye")
 wnd!        .setCallback(BBjAPI.ON_RESIZE,"resize")
