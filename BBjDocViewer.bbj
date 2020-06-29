@@ -26,6 +26,8 @@ class public BBjDocViewer extends BBjWidget
     field protected ResultSet RS!
     field protected Boolean Toolbar! = BBjAPI.TRUE
     field protected Boolean HandTool! = BBjAPI.FALSE
+    
+    field protected BBjToolButton TbPrint!
 
     rem /**
     rem  * disabled default constructor
@@ -57,6 +59,7 @@ class public BBjDocViewer extends BBjWidget
         if (init!) then
 
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
+
             #HTMLView!=htmlview!
             
             if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5")
@@ -69,6 +72,11 @@ class public BBjDocViewer extends BBjWidget
                 #HTMLView!.setLocation(-9,-9)
             FI
             
+            icon$ = BBjAPI().getFileSystem().resolvePath("BBjDocViewer/res/printer.png")
+            #TbPrint! = #getCanvas().addToolButton(300,#getCanvas().getWidth()-50,10,35,35,"BITMAP="+icon$,$0010$)
+            #TbPrint!.setOpaque(1)
+            #TbPrint!.setVisible(0)
+            #TbPrint!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onPrint")    
         FI
 
         if INFO(3,6)="5" then
@@ -76,11 +84,75 @@ class public BBjDocViewer extends BBjWidget
         else
             #HTMLView!.setSize(#getCanvas().getWidth()+16,#getCanvas().getHeight()+16)
         FI
+        #TbPrint!.setLocation(#getCanvas().getWidth()-50,10)
+        
+        
+        
     methodend
+
 
   
     method public void open(BBjString file$)
-        #HTMLView!.setUrl("file://"+file$)
+    
+        
+        ext$ = file$
+        while pos("."=ext$)>0
+            ext$=ext$(pos("."=ext$)+1)
+        wend
+        while pos("#"=ext$)>0
+            ext$=ext$(1,pos("#"=ext$)-1)
+        wend
+        ext$=cvs(ext$,4)
+        
+        clean$=file$
+        while pos("/"=clean$)>0
+            clean$=clean$(pos("/"=clean$)+1)
+        wend
+        while pos("\"=clean$)>0
+            clean$=clean$(pos("\"=clean$)+1)
+        wend        
+        while pos("#"=clean$)>0
+            clean$=clean$(1,pos("#"=clean$)-1)
+        wend
+        
+        
+        if INFO(3,6)<>"5" then
+            if (ext$<>"PDF") then
+                #TbPrint!.setVisible(1)
+            else
+                #TbPrint!.setVisible(0)
+            fi
+        fi
+            
+        if INFO(3,6)<>"5" then
+            #HTMLView!.setUrl("file://"+file$)
+        else
+            switch ext$
+                case "HTML"
+                case "HTM"
+                    ch = unt
+                    open (ch)file$
+                    f$= fin(ch)
+                    l=dec(f$(1,4))
+                    read record (ch,siz=l)text$
+                    close (ch)
+                    #HTMLView!.setText(text$)
+                    break
+                case "PDF"
+                    path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(file$, "deliver", clean$, 0, 1)
+                    #HTMLView!.setUrl(path$)
+                    break
+                case default
+                    #HTMLView!.setText("what nu?")
+                    break        
+              swend
+        fi
+
+        
+    methodend
+    
+    method public void onPrint(BBjToolButtonPushEvent ev!)
+        #HTMLView!.print()
     methodend
     
   
