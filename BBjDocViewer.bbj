@@ -115,8 +115,7 @@ class public BBjDocViewer extends BBjWidget
             clean$=clean$(1,pos("#"=clean$)-1)
         wend
         
-        
-        if INFO(3,6)<>"5" then
+        if INFO(3,6)<>"5" OR REV>= "REV 20.12" then
             if (ext$<>"PDF") then
                 #TbPrint!.setVisible(1)
             else
@@ -128,8 +127,10 @@ class public BBjDocViewer extends BBjWidget
             #HTMLView!.setUrl("file://"+file$)
         else
             switch ext$
+                case "TXT"
+                case "CSV"
                 case "HTML"
-                case "HTM"
+                case "HTM"                    
                     ch = unt
                     open (ch)file$
                     f$= fin(ch)
@@ -143,8 +144,14 @@ class public BBjDocViewer extends BBjWidget
                     #HTMLView!.setUrl(path$)
                     break
                 case default
-                    #HTMLView!.setText("what nu?")
-                    break        
+                    ch = unt
+                    open (ch)file$
+                    f$= fin(ch)
+                    l=dec(f$(1,4))
+                    read record (ch,siz=l)text$
+                    close (ch)
+                    #HTMLView!.setText(text$)
+                    break
               swend
         fi
 
