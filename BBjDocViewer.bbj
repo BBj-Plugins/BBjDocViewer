@@ -10,6 +10,7 @@ use java.lang.Integer
 use java.util.ArrayList
 use java.util.HashMap
 use java.lang.Object
+use java.io.File
 use com.basis.bbj.proxies.event.BBjCustomEvent
 use com.basiscomponents.comm.WsServer
 use com.basiscomponents.comm.CrossEventDispatcher
@@ -26,7 +27,7 @@ class public BBjDocViewer extends BBjWidget
     field protected ResultSet RS!
     field protected Boolean Toolbar! = BBjAPI.TRUE
     field protected Boolean HandTool! = BBjAPI.FALSE
-    
+
     field protected BBjToolButton TbPrint!
 
     rem /**
@@ -61,68 +62,93 @@ class public BBjDocViewer extends BBjWidget
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
 
             #HTMLView!=htmlview!
-            
-            if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5")
+
+            if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5" AND INFO(3,6)<>"6")
                 htmlview!.setText("<html><center>Error: Need the Chromium Engine in BBj 18.10 or later. Please check your BBj SAM coverage!</center></html>")
             else
                 htmlview!.setOpaque(0)
             fi
-            
-            if INFO(3,6)<>"5" then
+
+            if INFO(3,6)<>"5" and INFO(3,6)<>"6" then
                 #HTMLView!.setLocation(-9,-9)
             FI
-            
+
             icon$ = BBjAPI().getFileSystem().resolvePath("BBjDocViewer/res/printer.png")
             #TbPrint! = #getCanvas().addToolButton(300,#getCanvas().getWidth()-50,10,35,35,"BITMAP="+icon$,$0010$)
             #TbPrint!.setOpaque(1)
             #TbPrint!.setVisible(0)
-            #TbPrint!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onPrint")    
+            #TbPrint!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onPrint")
         FI
 
-        if INFO(3,6)="5" then
+        if INFO(3,6)="5" OR INFO(3,6)="6" then
             #HTMLView!.setSize(#getCanvas().getWidth(),#getCanvas().getHeight())
         else
             #HTMLView!.setSize(#getCanvas().getWidth()+16,#getCanvas().getHeight()+16)
         FI
         #TbPrint!.setLocation(#getCanvas().getWidth()-50,10)
-        
-        
-        
+
+    methodend
+
+    rem /**
+    rem  * openBlob: open a document directly from a blob in memory
+    rem  * 
+    rem  * @param BBjString blob$ : the document as binary string 
+    rem  * @param BBjString name$ : the file name under which the file should be served
+    rem  * 
+    rem  * The approrpiate viewer will be determined as of the extention of the name$ 
+    rem  */
+    method public void openBlob(BBjString blob$,BBjString name$)
+
+        tmpdir$ = System.getProperty("java.io.tmpdir")
+        if new File(tmpdir$+name$).exists() then
+            d! = java.nio.file.Files.createTempDirectory("__fviewer")
+            tmpdir$ = d!.toAbsolutePath().toString()+"/"
+        fi
+        path$=tmpdir$+name$
+        f! = new File(path$)
+        f!.deleteOnExit()
+
+
+        ch=unt
+        open (ch,mode="O_TRUNC, O_CREATE")path$
+        write (ch)blob$
+        close (ch)
+
+        #open(path$)
+
     methodend
 
 
-  
+    rem /**
+    rem  * open: open a document directly from a phyiscal file on disk
+    rem  * 
+    rem  * @param BBjString file$ : the file name under which the file should be served
+    rem  * 
+    rem  * The approrpiate viewer will be determined as of the extention of the name$ 
+    rem  */
     method public void open(BBjString file$)
-    
-        
-        ext$ = file$
-        while pos("."=ext$)>0
-            ext$=ext$(pos("."=ext$)+1)
-        wend
-        while pos("#"=ext$)>0
-            ext$=ext$(1,pos("#"=ext$)-1)
-        wend
-        ext$=cvs(ext$,4)
-        
+
+        ext$=#getExtension(file$)
+
         clean$=file$
         while pos("/"=clean$)>0
             clean$=clean$(pos("/"=clean$)+1)
         wend
         while pos("\"=clean$)>0
             clean$=clean$(pos("\"=clean$)+1)
-        wend        
+        wend
         while pos("#"=clean$)>0
             clean$=clean$(1,pos("#"=clean$)-1)
         wend
-        
-        if INFO(3,6)<>"5" OR REV>= "REV 20.12" then
+
+        if (INFO(3,6)<>"5" AND INFO(3,6)<>"6") OR REV>= "REV 20.12" then
             if (ext$<>"PDF") then
                 #TbPrint!.setVisible(1)
             else
                 #TbPrint!.setVisible(0)
             fi
         fi
-            
+
         if INFO(3,6)<>"5" then
             #HTMLView!.setUrl("file://"+file$)
         else
@@ -130,7 +156,7 @@ class public BBjDocViewer extends BBjWidget
                 case "TXT"
                 case "CSV"
                 case "HTML"
-                case "HTM"                    
+                case "HTM"
                     ch = unt
                     open (ch)file$
                     f$= fin(ch)
@@ -155,15 +181,27 @@ class public BBjDocViewer extends BBjWidget
               swend
         fi
 
-        
+
     methodend
-    
+
+    rem /**
+    rem  * 
+    rem  */
     method public void onPrint(BBjToolButtonPushEvent ev!)
         #HTMLView!.print()
     methodend
-    
-  
 
+
+    method private BBjString getExtension(BBjString file$)
+        ext$ = file$
+        while pos("."=ext$)>0
+            ext$=ext$(pos("."=ext$)+1)
+        wend
+        while pos("#"=ext$)>0
+            ext$=ext$(1,pos("#"=ext$)-1)
+        wend
+        ext$=cvs(ext$,4)
+        methodret ext$
+
+    methodend
 classend
-
-

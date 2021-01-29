@@ -5,8 +5,11 @@ wnd! = BBjAPI().openSysGui("X0").addWindow(10,10,900,600,"BBj Document Viewer De
 
 
 
-handTool!  = wnd!.addButton(211,5,5,100,25,"Open Document")
+handTool!  = wnd!.addButton(211,5,5,150,25,"Open Document")
 handTool!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocument")
+
+handToolBlob!  = wnd!.addButton(212,160,5,150,25,"Open Document (as BLOB)")
+handToolBlob!.setCallback(BBjAPI.ON_BUTTON_PUSH,"onOpenDocumentBlob")
 
 
 viewer! = new BBjDocViewer(wnd!,100,0,40,895,555)
@@ -34,6 +37,30 @@ REM Build filters for brc/arc and all files
 
   if FILE_NAME$ <> "::CANCEL::" then
     viewer!.open(FILE_NAME$)
+  fi
+return
+
+
+onOpenDocumentBlob:
+REM Build filters for brc/arc and all files
+  FILTER$="PDF Files"+$0a$+"*.pdf"
+  FILTER$=FILTER$+$0a$+"All Files (*.*)"+$0a$+"*.*"
+
+  REM Starting directory is the default Directory
+  FILE_DIR$=""
+
+  REM Use FILEOPEN() to get name of file to open
+  FILE_NAME$=FILEOPEN("Open Resource File",FILE_DIR$,"","",FILTER$)
+
+  if FILE_NAME$ <> "::CANCEL::" then
+    ch=unt
+    open (ch)FILE_NAME$ 
+    read record (ch,siz=dec(fin(ch)(1,4)))blob$
+    close (ch)
+    p! = java.nio.file.Paths.get(file_name$)
+    file_name$ = p!.getFileName().toString()
+    
+    viewer!.openBlob(blob$,file_name$)
   fi
 return
 
