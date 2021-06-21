@@ -1,3 +1,3 @@
 A document viewer (not only) for PDF documents. But for now, only PDF is supported...
 
-![2021-03-04_1119](PdfView.png)
+![2021-03-04_1119](https://github.com/BBj-Plugins/BBjDocViewer/blob/master/PdfView.png)
