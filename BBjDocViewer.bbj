@@ -149,37 +149,33 @@ class public BBjDocViewer extends BBjWidget
             fi
         fi
 
-        if INFO(3,6)<>"5" then
-            #HTMLView!.setUrl("file://"+file$)
-        else
-            switch ext$
-                case "TXT"
-                case "CSV"
-                case "HTML"
-                case "HTM"
-                    ch = unt
-                    open (ch)file$
-                    f$= fin(ch)
-                    l=dec(f$(1,4))
-                    read record (ch,siz=l)text$
-                    close (ch)
-                    #HTMLView!.setText(text$)
-                    break
-                case "PDF"
-                    path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(file$, "deliver", clean$, 0, 1)
-                    #HTMLView!.setUrl(path$)
-                    break
-                case default
-                    ch = unt
-                    open (ch)file$
-                    f$= fin(ch)
-                    l=dec(f$(1,4))
-                    read record (ch,siz=l)text$
-                    close (ch)
-                    #HTMLView!.setText(text$)
-                    break
-              swend
-        fi
+        switch ext$
+            case "TXT"
+            case "CSV"
+            case "HTML"
+            case "HTM"
+                ch = unt
+                open (ch)file$
+                f$= fin(ch)
+                l=dec(f$(1,4))
+                read record (ch,siz=l)text$
+                close (ch)
+                #HTMLView!.setText(text$)
+                break
+            case "PDF"
+                path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(file$, "deliver", clean$, 0, 1)
+                #HTMLView!.setUrl(path$)
+                break
+            case default
+                ch = unt
+                open (ch)file$
+                f$= fin(ch)
+                l=dec(f$(1,4))
+                read record (ch,siz=l)text$
+                close (ch)
+                #HTMLView!.setText(text$)
+                break
+          swend
 
 
     methodend
