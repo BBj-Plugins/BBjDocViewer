@@ -47,6 +47,17 @@ class public BBjDocViewer extends BBjWidget
     method public BBjDocViewer(BBjWindow wnd!, BBjNumber id!, BBjNumber x!, BBjNumber y!, BBjNumber w!, BBjNumber h!)
         #super!.create(wnd!,id!,x!,y!,w!,h!)
     methodend
+    
+    method public BBjDocViewer(BBjChildWindow wnd!)
+        #setCanvas(wnd!)
+        #super!.setX(wnd!.getX())
+        #super!.setY(wnd!.getY())
+        #super!.setW(wnd!.getWidth())
+        #super!.setH(wnd!.getHeight())
+        #redraw(BBjAPI.TRUE)
+        
+    methodend
+    
     rem /**
     rem  * @Override
     rem  * This method is called whenever the widget needs to be rendered
@@ -60,7 +71,13 @@ class public BBjDocViewer extends BBjWidget
         if (init!) then
 
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
-
+      
+      if (info(3,6)="6" AND AND(#getCanvas().getWindowFlags(),$00100000$) = $00100000$) then
+        rem in DWC, if parent window is client-side sized, make the htmlview same size as surrunding canvas
+        htmlview!.setStyle("width","100%")
+        htmlview!.setStyle("height","100%")
+       fi
+      
             #HTMLView!=htmlview!
 
             if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5" AND INFO(3,6)<>"6")
