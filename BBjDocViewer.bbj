@@ -27,9 +27,11 @@ class public BBjDocViewer extends BBjWidget
     field protected ResultSet RS!
     field protected Boolean Toolbar! = BBjAPI.TRUE
     field protected Boolean HandTool! = BBjAPI.FALSE
-
     field protected BBjToolButton TbPrint!
-
+    field protected BBjButton next!
+    field protected BBjButton previous!
+    field protected int currentPage!
+    field protected BBjVector pages!
     rem /**
     rem  * disabled default constructor
     rem  */
@@ -47,7 +49,7 @@ class public BBjDocViewer extends BBjWidget
     method public BBjDocViewer(BBjWindow wnd!, BBjNumber id!, BBjNumber x!, BBjNumber y!, BBjNumber w!, BBjNumber h!)
         #super!.create(wnd!,id!,x!,y!,w!,h!)
     methodend
-    
+
     method public BBjDocViewer(BBjChildWindow wnd!)
         #setCanvas(wnd!)
         #super!.setX(wnd!.getX())
@@ -55,9 +57,7 @@ class public BBjDocViewer extends BBjWidget
         #super!.setW(wnd!.getWidth())
         #super!.setH(wnd!.getHeight())
         #redraw(BBjAPI.TRUE)
-        
     methodend
-    
     rem /**
     rem  * @Override
     rem  * This method is called whenever the widget needs to be rendered
@@ -69,15 +69,14 @@ class public BBjDocViewer extends BBjWidget
         declare BBjHtmlView htmlview!
 
         if (init!) then
-
             htmlview! = #getCanvas().addHtmlView(101,0,0,#getCanvas().getWidth(),#getCanvas().getHeight(),"")
-      
-      if (info(3,6)="6" AND AND(#getCanvas().getWindowFlags(),$00100000$) = $00100000$) then
-        rem in DWC, if parent window is client-side sized, make the htmlview same size as surrunding canvas
-        htmlview!.setStyle("width","100%")
-        htmlview!.setStyle("height","100%")
-       fi
-      
+
+            if (info(3,6)="6" AND AND(#getCanvas().getWindowFlags(),$00100000$) = $00100000$) then
+                rem in DWC, if parent window is client-side sized, make the htmlview same size as surrunding canvas
+                htmlview!.setStyle("width","100%")
+                htmlview!.setStyle("height","100%")
+            fi
+
             #HTMLView!=htmlview!
 
             if (htmlview!.getClientType() <> "Chromium" AND INFO(3,6)<>"5" AND INFO(3,6)<>"6")
@@ -95,6 +94,16 @@ class public BBjDocViewer extends BBjWidget
             #TbPrint!.setOpaque(1)
             #TbPrint!.setVisible(0)
             #TbPrint!.setCallback(BBjAPI.ON_TOOL_BUTTON_PUSH,#this!,"onPrint")
+            #next! = #getCanvas().addButton("<html><bbj-icon name=""arrow-big-right""></bbj-icon></html>")
+            #next!.setStyle("position","fixed")
+            #next!.setStyle("bottom","50vh")
+            #next!.setStyle("right","10px")
+            #previous! = #getCanvas().addButton("<html><bbj-icon name=""arrow-big-left""></bbj-icon></html>")
+            #previous!.setStyle("position","fixed")
+            #previous!.setStyle("bottom","50vh")
+            #previous!.setStyle("left","10px")
+            #next!.setVisible(0)
+            #previous!.setVisible(0)
         FI
 
         if INFO(3,6)="5" OR INFO(3,6)="6" then
@@ -102,119 +111,154 @@ class public BBjDocViewer extends BBjWidget
         else
             #HTMLView!.setSize(#getCanvas().getWidth()+16,#getCanvas().getHeight()+16)
         FI
+
         #TbPrint!.setLocation(#getCanvas().getWidth()-50,10)
-
     methodend
-
     rem /**
     rem  * openBlob: open a document directly from a blob in memory
-    rem  * 
-    rem  * @param BBjString blob$ : the document as binary string 
+    rem  *
+    rem  * @param BBjString blob$ : the document as binary string
     rem  * @param BBjString name$ : the file name under which the file should be served
-    rem  * 
-    rem  * The approrpiate viewer will be determined as of the extention of the name$ 
+    rem  *
+    rem  * The appropiate viewer will be determined as of the extention of the name$
     rem  */
     method public void openBlob(BBjString blob$,BBjString name$)
-
         tmpdir$ = System.getProperty("java.io.tmpdir")
         if new File(tmpdir$+name$).exists() then
-            d! = java.nio.file.Files.createTempDirectory("__fviewer")
-            tmpdir$ = d!.toAbsolutePath().toString()+"/"
-        fi
-        path$=tmpdir$+name$
-        f! = new File(path$)
-        f!.deleteOnExit()
+        d! = java.nio.file.Files.createTempDirectory("__fviewer")
+        tmpdir$ = d!.toAbsolutePath().toString()+"/"
+    fi
 
-
-        ch=unt
-        open (ch,mode="O_TRUNC, O_CREATE")path$
-        write (ch)blob$
-        close (ch)
-
-        #open(path$)
-
+    path$=tmpdir$+name$
+    f! = new File(path$)
+    f!.deleteOnExit()
+    ch=unt
+    open (ch,mode="O_TRUNC, O_CREATE")path$
+    write (ch)blob$
+    close (ch)
+    #open(path$)
     methodend
-
-
     rem /**
     rem  * open: open a document directly from a phyiscal file on disk
-    rem  * 
+    rem  *
     rem  * @param BBjString file$ : the file name under which the file should be served
-    rem  * 
-    rem  * The approrpiate viewer will be determined as of the extention of the name$ 
+    rem  *
+    rem  * The approrpiate viewer will be determined as of the extention of the name$
     rem  */
     method public void open(BBjString file$)
-
         ext$=#getExtension(file$)
-
         clean$=file$
         while pos("/"=clean$)>0
             clean$=clean$(pos("/"=clean$)+1)
         wend
+
         while pos("\"=clean$)>0
             clean$=clean$(pos("\"=clean$)+1)
         wend
+
         while pos("#"=clean$)>0
             clean$=clean$(1,pos("#"=clean$)-1)
         wend
 
         if (INFO(3,6)<>"5" AND INFO(3,6)<>"6") OR REV>= "REV 20.12" then
-            if (ext$<>"PDF") then
-                #TbPrint!.setVisible(1)
-            else
-                #TbPrint!.setVisible(0)
-            fi
+        if (ext$<>"PDF") then
+            #TbPrint!.setVisible(1)
+        else
+            #TbPrint!.setVisible(0)
         fi
+    fi
 
-        switch ext$
-            case "TXT"
-            case "CSV"
-            case "HTML"
-            case "HTM"
-                ch = unt
-                open (ch)file$
-                f$= fin(ch)
-                l=dec(f$(1,4))
-                read record (ch,siz=l)text$
-                close (ch)
-                #HTMLView!.setText(text$)
-                break
-            case "PDF"
-                path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(file$, "deliver", clean$, 0, 1)
-                #HTMLView!.setUrl(path$)
-                break
-            case default
-                ch = unt
-                open (ch)file$
-                f$= fin(ch)
-                l=dec(f$(1,4))
-                read record (ch,siz=l)text$
-                close (ch)
-                #HTMLView!.setText(text$)
-                break
-          swend
-
-
+    switch ext$
+        case "PNG"
+            path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(file$, "deliver", clean$, 0, 1)
+            #HTMLView!.setUrl(path$)
+            break
+        case "TXT"
+        case "CSV"
+        case "HTML"
+        case "HTM"
+            ch = unt
+            open (ch)file$
+            f$= fin(ch)
+            l=dec(f$(1,4))
+            read record (ch,siz=l)text$
+            close (ch)
+            #HTMLView!.setText(text$)
+            break
+        case "PDF"
+            path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(file$, "deliver", clean$, 0, 1)
+            #HTMLView!.setUrl(path$)
+            break
+        case default
+            ch = unt
+            open (ch)file$
+            f$= fin(ch)
+            l=dec(f$(1,4))
+            read record (ch,siz=l)text$
+            close (ch)
+            #HTMLView!.setText(text$)
+            break
+    swend
     methodend
 
+    method public void openPictures(BBjVector paths!)
+        #TbPrint!.setVisible(0)
+        #pages! = paths!
+        #currentPage! = 0
+        path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(str(#pages!.get(0)), "deliver", clean$, 0, 1)
+        #HTMLView!.setUrl(path$)
+        #next!.setVisible(1)
+        #previous!.setVisible(0)
+        #next!.setCallback(BBjAPI.ON_BUTTON_PUSH,#this!,"onNext")
+        #previous!.setCallback(BBjAPI.ON_BUTTON_PUSH,#this!,"onPrevious")
+    methodend
+
+    method public void onNext(BBjButtonPushEvent e!)
+        #currentPage! = #currentPage! + 1
+        if #currentPage! < #pages!.size() - 1 then
+            path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(str(#pages!.get(#currentPage!)), "deliver", clean$, 0, 1)
+            #HTMLView!.setUrl(path$)
+            #previous!.setVisible(1)
+        else
+            path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(str(#pages!.get(#currentPage!)), "deliver", clean$, 0, 1)
+            #HTMLView!.setUrl(path$)
+            #next!.setVisible(0)
+        fi
+    methodend
+
+    method public void onPrevious(BBjButtonPushEvent e!)
+        #currentPage! = #currentPage! - 1
+        if #currentPage! > 0 then
+            path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(str(#pages!.get(#currentPage!)), "deliver", clean$, 0, 1)
+            #HTMLView!.setUrl(path$)
+            #next!.setVisible(1)
+        else
+            path$=::BBUtils.bbj::BBUtils.copyFileToWebServer(str(#pages!.get(#currentPage!)), "deliver", clean$, 0, 1)
+            #HTMLView!.setUrl(path$)
+            #previous!.setVisible(0)
+        fi
+    methodend
+ 
+ 
     rem /**
-    rem  * 
+    rem  *
     rem  */
     method public void onPrint(BBjToolButtonPushEvent ev!)
         #HTMLView!.print()
     methodend
-
 
     method private BBjString getExtension(BBjString file$)
         ext$ = file$
         while pos("."=ext$)>0
             ext$=ext$(pos("."=ext$)+1)
         wend
+
         while pos("#"=ext$)>0
             ext$=ext$(1,pos("#"=ext$)-1)
         wend
+
         ext$=cvs(ext$,4)
         methodret ext$
-
     methodend
+
 classend
